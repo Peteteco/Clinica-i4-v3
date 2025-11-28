@@ -195,6 +195,8 @@ export interface Database {
           pause_duration: number
           greeting_message: string
           closing_message: string
+          openai_api_key: string | null
+          confirmation_email_html: string | null
         }
         Insert: {
           id?: string
@@ -206,6 +208,8 @@ export interface Database {
           pause_duration?: number
           greeting_message?: string
           closing_message?: string
+          openai_api_key?: string | null
+          confirmation_email_html?: string | null
         }
         Update: {
           id?: string
@@ -217,6 +221,8 @@ export interface Database {
           pause_duration?: number
           greeting_message?: string
           closing_message?: string
+          openai_api_key?: string | null
+          confirmation_email_html?: string | null
         }
       }
       whatsapp_instances: {
