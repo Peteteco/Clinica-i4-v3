@@ -110,14 +110,16 @@ function SortableCard({ card }: { card: KanbanCard }) {
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-semibold text-accent">
             {card.name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .toUpperCase()
-              .slice(0, 2)}
+              ? card.name.split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)
+              : "?"
+            }
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-sm truncate">{card.name}</h3>
+            <h3 className="font-semibold text-sm truncate">{card.name || "Sem nome"}</h3>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -129,11 +131,11 @@ function SortableCard({ card }: { card: KanbanCard }) {
       <div className="space-y-2 text-xs">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Mail className="h-3 w-3 shrink-0" />
-          <span className="truncate">{card.email}</span>
+          <span className="truncate">{card.email || "Sem email"}</span>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <Phone className="h-3 w-3 shrink-0" />
-          <span className="truncate">{card.phone}</span>
+          <span className="truncate">{card.phone || "Sem telefone"}</span>
         </div>
       </div>
 

@@ -1,9 +1,10 @@
-import { Search, UserPlus, Mail, Phone } from "lucide-react";
+import { Search, UserPlus, Mail, Phone, Filter, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { usePatients, useCreatePatient } from "@/hooks/usePatients";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -31,8 +33,27 @@ interface PatientFormData {
   status: 'active' | 'inactive';
 }
 
+type KanbanStatus =
+  | "novo_contato"
+  | "qualificado"
+  | "em_atendimento"
+  | "agendado"
+  | "aguardando_confirmacao"
+  | "concluido"
+  | "all";
+
+const kanbanStatuses = [
+  { id: "novo_contato", title: "Novo Contato", color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
+  { id: "qualificado", title: "Qualificado", color: "bg-purple-500/10 text-purple-600 border-purple-500/20" },
+  { id: "em_atendimento", title: "Em Atendimento", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
+  { id: "agendado", title: "Agendado", color: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20" },
+  { id: "aguardando_confirmacao", title: "Aguardando Confirmação", color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
+  { id: "concluido", title: "Concluído", color: "bg-green-500/10 text-green-600 border-green-500/20" },
+];
+
 export default function CRM() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<KanbanStatus>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { data: patients = [], isLoading } = usePatients();
   const { profile } = useAuth();
@@ -78,14 +99,18 @@ export default function CRM() {
     }
   };
 
-  // Filtrar pacientes pela busca
+  // Filtrar pacientes pela busca e status
   const filteredPatients = patients.filter((patient) => {
     const search = searchTerm.toLowerCase();
-    return (
-      patient.name.toLowerCase().includes(search) ||
-      patient.email.toLowerCase().includes(search) ||
-      patient.phone.toLowerCase().includes(search)
+    const matchesSearch = (
+      (patient.name?.toLowerCase() || "").includes(search) ||
+      (patient.email?.toLowerCase() || "").includes(search) ||
+      (patient.phone?.toLowerCase() || "").includes(search)
     );
+    
+    const matchesStatus = statusFilter === "all" || patient.kanban_status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
   });
 
   if (isLoading) {
@@ -127,26 +152,21 @@ export default function CRM() {
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nome Completo *</Label>
+                <Label htmlFor="name">Nome Completo</Label>
                 <Input
                   id="name"
                   placeholder="Ex: João da Silva"
-                  {...register('name', { required: 'Nome é obrigatório' })}
-                  className={errors.name ? 'border-red-500' : ''}
+                  {...register('name')}
                 />
-                {errors.name && (
-                  <p className="text-xs text-red-500">{errors.name.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="joao@example.com"
                   {...register('email', {
-                    required: 'Email é obrigatório',
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                       message: 'Email inválido',
@@ -160,16 +180,12 @@ export default function CRM() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Telefone *</Label>
+                <Label htmlFor="phone">Telefone</Label>
                 <Input
                   id="phone"
                   placeholder="(11) 98888-8888"
-                  {...register('phone', { required: 'Telefone é obrigatório' })}
-                  className={errors.phone ? 'border-red-500' : ''}
+                  {...register('phone')}
                 />
-                {errors.phone && (
-                  <p className="text-xs text-red-500">{errors.phone.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -219,6 +235,58 @@ export default function CRM() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+      </div>
+
+      {/* Filtros por Status */}
+      <div className="animate-fade-in-up">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Filtrar por:</span>
+          
+          <Button
+            variant={statusFilter === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("all")}
+            className="h-8 text-xs"
+          >
+            Todos ({patients.length})
+          </Button>
+
+          {kanbanStatuses.map((status) => {
+            const count = patients.filter(p => p.kanban_status === status.id).length;
+            return (
+              <Button
+                key={status.id}
+                variant={statusFilter === status.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter(status.id as KanbanStatus)}
+                className={cn(
+                  "h-8 text-xs",
+                  statusFilter === status.id && status.id === "novo_contato" && "bg-blue-500 hover:bg-blue-600",
+                  statusFilter === status.id && status.id === "qualificado" && "bg-purple-500 hover:bg-purple-600",
+                  statusFilter === status.id && status.id === "em_atendimento" && "bg-yellow-500 hover:bg-yellow-600",
+                  statusFilter === status.id && status.id === "agendado" && "bg-cyan-500 hover:bg-cyan-600",
+                  statusFilter === status.id && status.id === "aguardando_confirmacao" && "bg-orange-500 hover:bg-orange-600",
+                  statusFilter === status.id && status.id === "concluido" && "bg-green-500 hover:bg-green-600"
+                )}
+              >
+                {status.title} ({count})
+              </Button>
+            );
+          })}
+
+          {statusFilter !== "all" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setStatusFilter("all")}
+              className="h-8 text-xs gap-1"
+            >
+              <X className="h-3 w-3" />
+              Limpar
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
@@ -273,22 +341,39 @@ export default function CRM() {
                 <div className="flex items-center gap-2.5 md:gap-3 min-w-0">
                   <div className="flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-full bg-accent/10 font-display text-base md:text-lg font-semibold text-accent">
                     {patient.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()}
+                      ? patient.name.split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                      : "?"
+                    }
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-foreground text-sm md:text-base truncate">{patient.name}</h3>
-                    <span
-                      className={`text-xs font-medium ${
-                        patient.status === "active"
-                          ? "text-success"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      {patient.status === "active" ? "Ativo" : "Inativo"}
-                    </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-foreground text-sm md:text-base truncate">
+                      {patient.name || "Sem nome"}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span
+                        className={`text-xs font-medium ${
+                          patient.status === "active"
+                            ? "text-success"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {patient.status === "active" ? "Ativo" : "Inativo"}
+                      </span>
+                      {patient.kanban_status && (() => {
+                        const statusInfo = kanbanStatuses.find(s => s.id === patient.kanban_status);
+                        return statusInfo ? (
+                          <Badge 
+                            variant="outline" 
+                            className={cn("text-[10px] h-5 px-2", statusInfo.color)}
+                          >
+                            {statusInfo.title}
+                          </Badge>
+                        ) : null;
+                      })()}
+                    </div>
                   </div>
                 </div>
                 <div className="shrink-0 rounded-full bg-accent/10 px-2.5 md:px-3 py-1 text-xs font-medium text-accent whitespace-nowrap">
@@ -300,11 +385,15 @@ export default function CRM() {
               <div className="space-y-2 border-t border-border/50 pt-3 md:pt-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Mail className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
-                  <span className="truncate text-xs md:text-sm">{patient.email}</span>
+                  <span className="truncate text-xs md:text-sm">
+                    {patient.email || "Sem email"}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Phone className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
-                  <span className="text-xs md:text-sm">{patient.phone}</span>
+                  <span className="text-xs md:text-sm">
+                    {patient.phone || "Sem telefone"}
+                  </span>
                 </div>
               </div>
 

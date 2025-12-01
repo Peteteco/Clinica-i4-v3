@@ -40,6 +40,8 @@ export default function Conhecimento() {
   const [documentToView, setDocumentToView] = useState<any>(null);
   const [isLoadingDocumentContent, setIsLoadingDocumentContent] = useState(false);
   const [currentTableName, setCurrentTableName] = useState<string | null>(null);
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   // Função para formatar slug: trocar - por _ e remover timestamp
   const formatSlugForTable = (slug: string): string => {
@@ -294,6 +296,57 @@ export default function Conhecimento() {
     } finally {
       setIsDeletingDocument(false);
       setDocumentToDelete(null);
+    }
+  };
+
+  // Função para deletar todos os documentos
+  const handleDeleteAll = async () => {
+    if (!currentTableName || !organization) {
+      toast.error("Informações da organização não encontradas");
+      return;
+    }
+
+    try {
+      setIsDeletingAll(true);
+
+      console.log("🗑️ Deletando TODOS os documentos");
+      console.log("Tabela:", currentTableName);
+
+      const payload = {
+        tableName: currentTableName,
+        organizationId: organization.id,
+        organizationName: organization.name,
+      };
+
+      console.log("Payload enviado:", payload);
+
+      const response = await fetch("https://webhook.n8nlabz.com.br/webhook/rag-deletar-tudo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao deletar documentos");
+      }
+
+      const result = await response.json();
+      console.log("Resultado da deleção:", result);
+
+      toast.success("Todos os documentos foram deletados com sucesso!");
+      
+      // Recarregar lista de documentos
+      await loadDocuments();
+      
+    } catch (error: any) {
+      console.error("Erro ao deletar todos os documentos:", error);
+      toast.error(error.message || "Erro ao deletar documentos");
+    } finally {
+      setIsDeletingAll(false);
+      setShowDeleteAllDialog(false);
     }
   };
 
@@ -576,9 +629,22 @@ export default function Conhecimento() {
               <BookOpen className="h-6 w-6 text-accent" />
               Base de Conhecimento
             </h3>
-            <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20">
-              {documents.length} {documents.length === 1 ? 'documento' : 'documentos'}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20">
+                {documents.length} {documents.length === 1 ? 'documento' : 'documentos'}
+              </Badge>
+              {documents.length > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowDeleteAllDialog(true)}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Excluir Tudo
+                </Button>
+              )}
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -816,6 +882,49 @@ export default function Conhecimento() {
                 </>
               ) : (
                 "Deletar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Alert Dialog para confirmar deleção de tudo */}
+      <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Excluir Toda a Base de Conhecimento
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong className="text-destructive">ATENÇÃO:</strong> Você está prestes a excluir <strong>TODOS os {documents.length} documentos</strong> da base de conhecimento do Agent IA.
+              <br />
+              <br />
+              Esta ação é <strong>IRREVERSÍVEL</strong> e todos os documentos serão permanentemente removidos.
+              <br />
+              <br />
+              Tem certeza que deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingAll}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAll}
+              disabled={isDeletingAll}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingAll ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deletando tudo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Sim, excluir tudo
+                </>
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

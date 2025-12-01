@@ -13,7 +13,7 @@ export function usePatients() {
       const { data, error } = await supabase
         .from('patients')
         .select('*')
-        .order('name', { ascending: true });
+        .order('created_at', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
       return data as Patient[];
