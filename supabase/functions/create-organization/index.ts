@@ -13,6 +13,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🚀 Iniciando create-organization Edge Function...');
+    
     // Criar cliente Supabase com Service Role (admin)
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -26,25 +28,51 @@ serve(async (req) => {
     )
 
     // Verificar se usuário logado é super admin
-    const authHeader = req.headers.get('Authorization')!
-    const token = authHeader.replace('Bearer ', '')
+    const authHeader = req.headers.get('Authorization')
+    console.log('🔑 Authorization header presente:', !!authHeader);
     
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+    if (!authHeader) {
+      console.error('❌ Nenhum header de autorização encontrado');
+      throw new Error('Não autenticado')
+    }
+    
+    const token = authHeader.replace('Bearer ', '')
+    console.log('🔑 Token extraído (primeiros 20 chars):', token.substring(0, 20) + '...');
+    
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
+    
+    console.log('👤 Resultado getUser - user:', user?.id);
+    console.log('👤 Resultado getUser - error:', userError);
+    
+    if (userError) {
+      console.error('❌ Erro ao verificar usuário:', userError);
+      throw new Error('Não autenticado: ' + userError.message)
+    }
     
     if (!user) {
+      console.error('❌ Usuário não encontrado no token');
       throw new Error('Não autenticado')
     }
 
+    console.log('✅ Usuário autenticado:', user.id);
+
     // Verificar se é super admin
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('is_super_admin')
       .eq('id', user.id)
       .single()
 
+    console.log('👤 Profile encontrado:', profile);
+    console.log('👤 Profile error:', profileError);
+    console.log('👤 Is super admin:', profile?.is_super_admin);
+
     if (!profile || !profile.is_super_admin) {
+      console.error('❌ Usuário não é super admin');
       throw new Error('Apenas super admins podem criar organizações')
     }
+    
+    console.log('✅ Verificação de super admin OK');
 
     // Pegar dados do request
     const { 
@@ -110,7 +138,7 @@ serve(async (req) => {
     console.log('✅ Organização criada:', orgData.id)
 
     // 4. Criar perfil do admin
-    const { error: profileError } = await supabaseAdmin
+    const { error: profileInsertError } = await supabaseAdmin
       .from('profiles')
       .insert({
         id: authData.user.id,
@@ -121,12 +149,12 @@ serve(async (req) => {
         is_active: true,
       })
 
-    if (profileError) {
-      console.error('❌ Erro ao criar perfil:', profileError)
+    if (profileInsertError) {
+      console.error('❌ Erro ao criar perfil:', profileInsertError)
       // Limpar: deletar organização e usuário
       await supabaseAdmin.from('organizations').delete().eq('id', orgData.id)
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
-      throw profileError
+      throw profileInsertError
     }
 
     console.log('✅ Perfil criado')
@@ -182,4 +210,3 @@ serve(async (req) => {
     )
   }
 })
-

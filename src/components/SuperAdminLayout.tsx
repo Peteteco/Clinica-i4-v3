@@ -21,9 +21,11 @@ export default function SuperAdminLayout() {
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate("/login");
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
+    } finally {
+      // Sempre navegar para login, mesmo com erro
+      navigate("/login");
     }
   };
 

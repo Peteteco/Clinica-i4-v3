@@ -402,10 +402,21 @@ export default function OrganizationForm() {
   // Criar/Atualizar organização
   const saveMutation = useMutation({
     mutationFn: async (data: OrganizationFormData) => {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log("🔍 Iniciando saveMutation...");
+      console.log("🔍 isEditing:", isEditing);
       
-      if (!session) {
-        throw new Error("Não autenticado");
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log("🔍 Session completa:", JSON.stringify(session, null, 2));
+      console.log("🔍 SessionError:", sessionError);
+      console.log("🔍 Access Token presente:", !!session?.access_token);
+      console.log("🔍 Access Token (primeiros 50 chars):", session?.access_token?.substring(0, 50) + '...');
+      console.log("🔍 User ID:", session?.user?.id);
+      console.log("🔍 User Email:", session?.user?.email);
+      
+      if (sessionError || !session || !session.access_token) {
+        console.error("❌ Erro ao obter sessão:", sessionError);
+        throw new Error("Sessão expirada. Por favor, faça logout e login novamente.");
       }
 
       let logoUrl = currentLogoUrl;
@@ -482,6 +493,18 @@ export default function OrganizationForm() {
         }
       } else {
         // Chamar Edge Function para criar
+        console.log("📞 Chamando Edge Function create-organization...");
+        console.log("📞 URL:", `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-organization`);
+        console.log("📞 VITE_SUPABASE_URL:", import.meta.env.VITE_SUPABASE_URL);
+        console.log("📞 Authorization Header:", `Bearer ${session.access_token.substring(0, 50)}...`);
+        console.log("📞 Payload:", {
+          organizationName: data.name,
+          adminEmail: data.adminEmail,
+          adminFullName: data.adminFullName,
+          isActive: data.is_active,
+          subscriptionPlan: data.subscription_plan,
+        });
+        
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-organization`,
           {
@@ -501,11 +524,19 @@ export default function OrganizationForm() {
           }
         );
 
+        console.log("📞 Response status:", response.status);
+        console.log("📞 Response statusText:", response.statusText);
+        console.log("📞 Response headers:", Object.fromEntries(response.headers.entries()));
+        
         const result = await response.json();
+        console.log("📞 Response body:", result);
 
         if (!response.ok) {
+          console.error("❌ Erro na resposta:", result);
           throw new Error(result.error || "Erro ao criar organização");
         }
+        
+        console.log("✅ Organização criada com sucesso!");
       }
     },
     onSuccess: () => {
@@ -537,10 +568,11 @@ export default function OrganizationForm() {
     try {
       toast.loading("Criando usuário...", { id: "create-user" });
 
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (!session) {
-        throw new Error("Não autenticado");
+      if (sessionError || !session) {
+        console.error("Erro ao obter sessão:", sessionError);
+        throw new Error("Sessão expirada. Por favor, faça login novamente.");
       }
 
       // Chamar Edge Function
@@ -591,10 +623,11 @@ export default function OrganizationForm() {
     try {
       toast.loading("Deletando usuário...", { id: "delete-user" });
 
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (!session) {
-        throw new Error("Não autenticado");
+      if (sessionError || !session) {
+        console.error("Erro ao obter sessão:", sessionError);
+        throw new Error("Sessão expirada. Por favor, faça login novamente.");
       }
 
       // Chamar Edge Function

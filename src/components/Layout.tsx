@@ -113,8 +113,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const handleSignOut = async () => {
     try {
       await signOut();
+      // Navegar para login após logout
+      window.location.href = '/login';
     } catch (error) {
       // Erro já tratado no AuthContext
+      // Navegar para login mesmo com erro
+      window.location.href = '/login';
     }
   };
 
