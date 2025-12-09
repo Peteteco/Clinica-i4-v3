@@ -39,7 +39,7 @@ import {
   GripVertical,
   ArrowLeft
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatPhoneNumber } from "@/lib/utils";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
@@ -135,7 +135,7 @@ function SortableCard({ card }: { card: KanbanCard }) {
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <Phone className="h-3 w-3 shrink-0" />
-          <span className="truncate">{card.phone || "Sem telefone"}</span>
+          <span className="truncate">{formatPhoneNumber(card.phone) || "Sem telefone"}</span>
         </div>
       </div>
 

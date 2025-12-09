@@ -1,5 +1,6 @@
-import { Search, UserPlus, Mail, Phone, Filter, X } from "lucide-react";
+import { Search, UserPlus, Mail, Phone, Filter, X, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { usePatients, useCreatePatient } from "@/hooks/usePatients";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +18,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, formatPhoneNumber } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -31,6 +32,7 @@ interface PatientFormData {
   email: string;
   phone: string;
   status: 'active' | 'inactive';
+  observations: string;
 }
 
 type KanbanStatus =
@@ -55,6 +57,7 @@ export default function CRM() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<KanbanStatus>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
   const { data: patients = [], isLoading } = usePatients();
   const { profile } = useAuth();
   const createPatient = useCreatePatient();
@@ -86,6 +89,7 @@ export default function CRM() {
         email: data.email,
         phone: data.phone,
         status: data.status,
+        observations: data.observations || null,
         organization_id: profile.organization_id,
         total_visits: 0,
       });
@@ -204,6 +208,17 @@ export default function CRM() {
                     <SelectItem value="inactive">Inativo</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="observations">Observações</Label>
+                <Textarea
+                  id="observations"
+                  placeholder="Anotações sobre o paciente..."
+                  {...register('observations')}
+                  rows={3}
+                  className="resize-none"
+                />
               </div>
 
               <DialogFooter>
@@ -333,7 +348,7 @@ export default function CRM() {
           {filteredPatients.map((patient, index) => (
             <div
               key={patient.id}
-              className="card-luxury group p-4 md:p-5 lg:p-6 animate-fade-in-up cursor-pointer"
+              className="card-luxury group p-4 md:p-5 lg:p-6 animate-fade-in-up"
               style={{ animationDelay: `${0.1 * index}s` }}
             >
               {/* Patient Header */}
@@ -392,9 +407,19 @@ export default function CRM() {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Phone className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
                   <span className="text-xs md:text-sm">
-                    {patient.phone || "Sem telefone"}
+                    {formatPhoneNumber(patient.phone) || "Sem telefone"}
                   </span>
                 </div>
+                
+                {/* Observações */}
+                {patient.observations && (
+                  <div className="flex items-start gap-2 text-sm text-muted-foreground mt-2 pt-2 border-t border-border/30">
+                    <FileText className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 mt-0.5" />
+                    <p className="text-xs md:text-sm line-clamp-2">
+                      {patient.observations}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Footer */}
@@ -402,7 +427,10 @@ export default function CRM() {
                 <span className="text-xs text-muted-foreground">
                   Última visita: {patient.last_visit ? new Date(patient.last_visit).toLocaleDateString('pt-BR') : 'Nunca'}
                 </span>
-                <button className="text-xs md:text-sm font-medium text-accent transition-colors hover:text-accent/80 self-start">
+                <button 
+                  onClick={() => setSelectedPatient(patient)}
+                  className="text-xs md:text-sm font-medium text-accent transition-colors hover:text-accent/80 self-start"
+                >
                   Ver Detalhes
                 </button>
               </div>
@@ -410,6 +438,120 @@ export default function CRM() {
           ))}
         </div>
       )}
+
+      {/* Modal de Detalhes do Paciente */}
+      <Dialog open={selectedPatient !== null} onOpenChange={() => setSelectedPatient(null)}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 font-display text-base font-semibold text-accent">
+                {selectedPatient?.name
+                  ? selectedPatient.name.split(" ")
+                      .map((n: string) => n[0])
+                      .join("")
+                      .toUpperCase()
+                  : "?"
+                }
+              </div>
+              {selectedPatient?.name || "Paciente"}
+            </DialogTitle>
+            <DialogDescription>
+              Informações completas do paciente
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPatient && (
+            <div className="space-y-4">
+              {/* Status */}
+              <div className="flex items-center gap-4">
+                <Badge 
+                  variant="outline"
+                  className={selectedPatient.status === 'active' ? 'border-green-500/50 text-green-600' : 'border-gray-500/50 text-gray-600'}
+                >
+                  {selectedPatient.status === 'active' ? 'Ativo' : 'Inativo'}
+                </Badge>
+                {selectedPatient.kanban_status && (() => {
+                  const statusInfo = kanbanStatuses.find(s => s.id === selectedPatient.kanban_status);
+                  return statusInfo ? (
+                    <Badge variant="outline" className={statusInfo.color}>
+                      {statusInfo.title}
+                    </Badge>
+                  ) : null;
+                })()}
+              </div>
+
+              {/* Informações de Contato */}
+              <div className="space-y-3 rounded-lg border border-border/50 bg-background p-4">
+                <h3 className="text-sm font-semibold text-foreground">Informações de Contato</h3>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">
+                      {selectedPatient.email || "Sem email"}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">
+                      {formatPhoneNumber(selectedPatient.phone) || "Sem telefone"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Estatísticas */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-border/50 bg-background p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Total de Visitas</p>
+                  <p className="text-2xl font-bold text-accent">{selectedPatient.total_visits}</p>
+                </div>
+                
+                <div className="rounded-lg border border-border/50 bg-background p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Última Visita</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {selectedPatient.last_visit 
+                      ? new Date(selectedPatient.last_visit).toLocaleDateString('pt-BR')
+                      : 'Nunca'
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* Observações */}
+              {selectedPatient.observations && (
+                <div className="space-y-2 rounded-lg border border-border/50 bg-background p-4">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="text-sm font-semibold text-foreground">Observações</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {selectedPatient.observations}
+                  </p>
+                </div>
+              )}
+
+              {/* Data de Cadastro */}
+              <div className="text-xs text-muted-foreground">
+                Cadastrado em: {new Date(selectedPatient.created_at).toLocaleDateString('pt-BR', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedPatient(null)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

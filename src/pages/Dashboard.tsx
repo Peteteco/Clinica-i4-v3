@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -43,6 +43,7 @@ interface PatientFormData {
   email: string;
   phone: string;
   status: 'active' | 'inactive';
+  observations: string;
 }
 
 export default function Dashboard() {
@@ -129,6 +130,7 @@ export default function Dashboard() {
         email: data.email,
         phone: data.phone,
         status: data.status,
+        observations: data.observations || null,
         organization_id: profile.organization_id,
         total_visits: 0,
       });
@@ -582,6 +584,17 @@ export default function Dashboard() {
                   <SelectItem value="inactive">Inativo</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="observations">Observações</Label>
+              <Textarea
+                id="observations"
+                placeholder="Anotações sobre o paciente..."
+                {...patientForm.register("observations")}
+                rows={3}
+                className="resize-none"
+              />
             </div>
 
             <DialogFooter>
