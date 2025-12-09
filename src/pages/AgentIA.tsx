@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bot, Sparkles, Save, Loader2, Edit, X, Clock, MessageSquare, Smile, Plus, Trash2, Mail, Bell, FileQuestion } from "lucide-react";
+import { Bot, Sparkles, Save, Loader2, Edit, X, Clock, MessageSquare, Smile, Plus, Trash2, Bell, FileQuestion } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,6 @@ interface AgentConfig {
   greeting_message: string;
   closing_message: string;
   openai_api_key?: string | null;
-  confirmation_email_html?: string | null;
   reminder_1_minutes: number;
   reminder_2_minutes: number;
   reminder_3_minutes: number;
@@ -48,9 +47,6 @@ export default function AgentIA() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
-  const [emailPrompt, setEmailPrompt] = useState("");
-  const [showEmailGenerator, setShowEmailGenerator] = useState(false);
   
   // Estados para unidades de tempo dos lembretes
   const [reminder1Value, setReminder1Value] = useState(15);
@@ -75,7 +71,6 @@ export default function AgentIA() {
     greeting_message: "Olá! Sou o assistente virtual da clínica. Como posso ajudá-lo hoje?",
     closing_message: "Foi um prazer atendê-lo! Se precisar de algo mais, estou à disposição.",
     openai_api_key: null,
-    confirmation_email_html: null,
     reminder_1_minutes: 15,
     reminder_2_minutes: 60,
     reminder_3_minutes: 1440,
@@ -177,71 +172,6 @@ export default function AgentIA() {
     }
   }, [isEditing, editConfig.reminder_1_minutes, editConfig.reminder_2_minutes, editConfig.reminder_3_minutes, editConfig.follow_up_1_minutes, editConfig.follow_up_2_minutes, editConfig.follow_up_3_minutes]);
 
-  const generateEmailWithAI = async () => {
-    if (!emailPrompt.trim()) {
-      toast.error("Por favor, descreva o que você quer no email");
-      return;
-    }
-
-    if (!config.openai_api_key) {
-      toast.error("API Key OpenAI não configurada. Entre em contato com o administrador.");
-      return;
-    }
-
-    try {
-      setIsGeneratingEmail(true);
-
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${config.openai_api_key}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4",
-          messages: [
-            {
-              role: "system",
-              content: "Você é um especialista em criar emails HTML profissionais e responsivos para confirmação de agendamentos médicos. Crie emails bonitos, modernos e com design responsivo."
-            },
-            {
-              role: "user",
-              content: `Crie um email HTML completo e responsivo para confirmação de agendamento com as seguintes características: ${emailPrompt}. 
-              
-              IMPORTANTE: 
-              - Retorne APENAS o código HTML completo, sem explicações
-              - Use design moderno e profissional
-              - Deve ser responsivo (mobile-first)
-              - Use cores que combinem com saúde/medicina (azul, verde, branco)
-              - Inclua placeholders como {{paciente_nome}}, {{data}}, {{hora}}, {{clinica_nome}}
-              - Tenha um layout limpo e fácil de ler`
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error?.message || "Erro ao gerar email");
-      }
-
-      const data = await response.json();
-      const generatedHTML = data.choices[0].message.content;
-
-      // Atualizar o config com o HTML gerado
-      setEditConfig({ ...editConfig, confirmation_email_html: generatedHTML });
-      
-      toast.success("Email gerado com sucesso!");
-    } catch (error: any) {
-      console.error("Erro ao gerar email:", error);
-      toast.error(error.message || "Erro ao gerar email com IA");
-    } finally {
-      setIsGeneratingEmail(false);
-    }
-  };
-
   const loadConfig = async () => {
     if (!profile?.organization_id) return;
 
@@ -310,7 +240,6 @@ export default function AgentIA() {
         greeting_message: editConfig.greeting_message,
         closing_message: editConfig.closing_message,
         // openai_api_key não é salvo aqui - apenas super admin pode configurar
-        confirmation_email_html: editConfig.confirmation_email_html,
         reminder_1_minutes: editConfig.reminder_1_minutes,
         reminder_2_minutes: editConfig.reminder_2_minutes,
         reminder_3_minutes: editConfig.reminder_3_minutes,
@@ -551,33 +480,6 @@ export default function AgentIA() {
               )}
             </div>
 
-            {/* Email de Confirmação */}
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-                <Mail className="h-5 w-5 text-accent" />
-                Email de Confirmação
-              </h3>
-              {config.confirmation_email_html ? (
-                <div className="bg-accent/5 border border-accent/20 rounded-lg p-4">
-                  <div className="bg-white rounded-lg overflow-hidden">
-                    <iframe
-                      srcDoc={config.confirmation_email_html}
-                      className="w-full h-[300px] border-0"
-                      title="Email Preview"
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Preview do email de confirmação configurado
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-accent/5 border border-accent/20 rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground italic">
-                    Nenhum email configurado. Clique em "Editar" para criar um com IA.
-                  </p>
-                </div>
-              )}
-            </div>
           </Card>
         </>
       ) : (
@@ -989,102 +891,6 @@ export default function AgentIA() {
                 <p className="text-sm text-muted-foreground italic">Nenhuma pergunta adicionada.</p>
               )}
             </div>
-          </div>
-
-          {/* Email de Confirmação com IA */}
-          <div className="mt-8 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Mail className="h-5 w-5 text-accent" />
-                Email de Confirmação
-              </h3>
-              <Button
-                onClick={() => setShowEmailGenerator(!showEmailGenerator)}
-                variant="outline"
-                className="gap-2"
-                type="button"
-              >
-                <Sparkles className="h-4 w-4" />
-                {showEmailGenerator ? "Ocultar" : "Gerar com IA"}
-              </Button>
-            </div>
-
-            {showEmailGenerator && (
-              <div className="space-y-4 border border-accent/20 rounded-lg p-4 bg-accent/5">
-                {/* Campo para descrever o email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email_prompt">Descreva como quer seu email de confirmação</Label>
-                  <Textarea
-                    id="email_prompt"
-                    rows={3}
-                    placeholder="Ex: Email moderno com logo no topo, saudação personalizada, detalhes do agendamento em um card, botão de confirmação verde, rodapé com endereço da clínica"
-                    value={emailPrompt}
-                    onChange={(e) => setEmailPrompt(e.target.value)}
-                  />
-                </div>
-
-                {/* Botão gerar */}
-                <Button
-                  onClick={generateEmailWithAI}
-                  disabled={isGeneratingEmail || !emailPrompt.trim() || !config.openai_api_key}
-                  className="w-full gap-2"
-                  type="button"
-                >
-                  {isGeneratingEmail ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Gerando email com IA...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4" />
-                      Gerar Email
-                    </>
-                  )}
-                </Button>
-
-                {!config.openai_api_key && (
-                  <p className="text-xs text-yellow-600 dark:text-yellow-500">
-                    ⚠️ API Key OpenAI não configurada. Entre em contato com o administrador para configurar.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Preview e Código HTML */}
-            {editConfig.confirmation_email_html && (
-              <div className="grid md:grid-cols-2 gap-4 mt-4">
-                {/* Preview */}
-                <div className="space-y-2">
-                  <Label>Preview do Email</Label>
-                  <div className="border border-border rounded-lg p-4 bg-white max-h-[500px] overflow-auto">
-                    <iframe
-                      srcDoc={editConfig.confirmation_email_html}
-                      className="w-full h-[450px] border-0"
-                      title="Email Preview"
-                    />
-                  </div>
-                </div>
-
-                {/* Código HTML */}
-                <div className="space-y-2">
-                  <Label>Código HTML</Label>
-                  <Textarea
-                    rows={20}
-                    value={editConfig.confirmation_email_html || ""}
-                    onChange={(e) => setEditConfig({ ...editConfig, confirmation_email_html: e.target.value })}
-                    className="font-mono text-xs max-h-[500px]"
-                    placeholder="<html>...</html>"
-                  />
-                </div>
-              </div>
-            )}
-
-            {!editConfig.confirmation_email_html && !showEmailGenerator && (
-              <p className="text-sm text-muted-foreground italic">
-                Nenhum email configurado. Clique em "Gerar com IA" para criar um.
-              </p>
-            )}
           </div>
         </Card>
       )}
