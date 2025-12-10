@@ -542,6 +542,29 @@ export interface Database {
           updated_at?: string
         }
       }
+      token_usage: {
+        Row: {
+          id: string
+          organization_id: string
+          total_tokens: number
+          cost_reais: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          total_tokens?: number
+          cost_reais?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          total_tokens?: number
+          cost_reais?: number | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

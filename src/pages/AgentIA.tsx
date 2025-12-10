@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bot, Sparkles, Save, Loader2, Edit, X, Clock, MessageSquare, Smile, Plus, Trash2, Bell, FileQuestion } from "lucide-react";
+import { Bot, Sparkles, Save, Loader2, Edit, X, Clock, MessageSquare, Smile, Plus, Trash2, Bell, FileQuestion, Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,9 @@ export default function AgentIA() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [totalTokens, setTotalTokens] = useState<number>(0);
+  const [totalCost, setTotalCost] = useState<number>(0);
+  const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   
   // Estados para unidades de tempo dos lembretes
   const [reminder1Value, setReminder1Value] = useState(15);
@@ -83,6 +86,7 @@ export default function AgentIA() {
 
   useEffect(() => {
     loadConfig();
+    loadTotalTokens();
   }, [profile?.organization_id]);
 
   // Funções auxiliares para converter segundos para minutos e vice-versa
@@ -209,6 +213,37 @@ export default function AgentIA() {
       toast.error("Erro ao carregar configurações");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadTotalTokens = async () => {
+    if (!profile?.organization_id) return;
+
+    try {
+      setIsLoadingTokens(true);
+      
+      // Buscar todos os registros da organização
+      const { data, error } = await supabase
+        .from("token_usage")
+        .select("total_tokens, cost_reais")
+        .eq("organization_id", profile.organization_id);
+
+      if (error) throw error;
+
+      // Somar todos os tokens
+      const totalTks = data?.reduce((sum, record) => sum + (record.total_tokens || 0), 0) || 0;
+      setTotalTokens(totalTks);
+
+      // Somar todos os custos em reais
+      const totalCst = data?.reduce((sum, record) => sum + (record.cost_reais || 0), 0) || 0;
+      setTotalCost(totalCst);
+    } catch (error) {
+      console.error("Erro ao carregar tokens:", error);
+      // Não mostrar erro ao usuário, apenas log
+      setTotalTokens(0);
+      setTotalCost(0);
+    } finally {
+      setIsLoadingTokens(false);
     }
   };
 
@@ -894,6 +929,77 @@ export default function AgentIA() {
           </div>
         </Card>
       )}
+
+      {/* Card de Tokens */}
+      <Card className="card-luxury p-6 animate-fade-in-up border-accent/20">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
+              <Zap className="h-6 w-6 text-accent" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Consumo de Tokens</h3>
+              <p className="text-sm text-muted-foreground">Total acumulado da organização</p>
+            </div>
+          </div>
+          <Badge className="bg-accent/10 text-accent border-accent/20">
+            IA
+          </Badge>
+        </div>
+
+        <div className="bg-accent/5 rounded-lg p-6 border border-accent/20">
+          {isLoadingTokens ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-6">
+              <div className="text-center">
+                <p className="text-3xl md:text-4xl font-bold text-accent mb-2">
+                  {totalTokens.toLocaleString('pt-BR')}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  tokens consumidos
+                </p>
+              </div>
+              <div className="text-center border-l border-accent/20 pl-6">
+                <p className="text-3xl md:text-4xl font-bold text-success mb-2">
+                  {totalCost.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 8
+                  })}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  custo total (R$)
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="bg-background rounded-lg p-3 border border-border/50">
+            <p className="text-xs text-muted-foreground mb-1">Custo médio</p>
+            <p className="text-lg font-semibold text-foreground">
+              {totalCost > 0 
+                ? (totalCost / (totalTokens / 1000)).toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 8
+                  }) + '/1k'
+                : 'R$ 0,00/1k'
+              }
+            </p>
+          </div>
+          <div className="bg-background rounded-lg p-3 border border-border/50">
+            <p className="text-xs text-muted-foreground mb-1">Status</p>
+            <p className="text-lg font-semibold text-success">Ativo</p>
+          </div>
+        </div>
+      </Card>
 
       {/* Estatísticas */}
       <div className="grid gap-4 md:gap-6 grid-cols-2 md:grid-cols-4 animate-fade-in-up">
