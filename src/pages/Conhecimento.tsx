@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BookOpen, Sparkles, Upload, Loader2, FileText, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PlanGuard } from "@/components/PlanGuard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -421,9 +422,10 @@ export default function Conhecimento() {
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8">
-      {/* Header */}
-      <div className="animate-fade-in">
+    <PlanGuard feature="base_conhecimento">
+      <div className="space-y-6 p-4 md:p-6 lg:p-8">
+        {/* Header */}
+        <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
@@ -873,7 +875,8 @@ export default function Conhecimento() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </PlanGuard>
   );
 }
 

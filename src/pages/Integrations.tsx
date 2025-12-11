@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { PlanGuard } from "@/components/PlanGuard";
 import {
   Dialog,
   DialogContent,
@@ -944,8 +945,9 @@ export default function Integrations() {
 
   // Tela inicial - só mostra se NÃO houver instância no banco
   return (
-    <>
-      <div className="flex items-center justify-center min-h-screen p-4 md:p-6 lg:p-8">
+    <PlanGuard feature="integracao_whatsapp">
+      <>
+        <div className="flex items-center justify-center min-h-screen p-4 md:p-6 lg:p-8">
         <div className="text-center space-y-6 max-w-md animate-fade-in">
           {/* Ícone */}
           <div className="flex justify-center">
@@ -1048,6 +1050,7 @@ export default function Integrations() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+      </>
+    </PlanGuard>
   );
 }

@@ -1,7 +1,9 @@
 import { Search, UserPlus, Mail, Phone, Filter, X, FileText, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
+import { LimitAlert } from "@/components/LimitAlert";
 import { usePatients, useCreatePatient } from "@/hooks/usePatients";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -59,9 +61,20 @@ export default function CRM() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
   const [resumoPatient, setResumoPatient] = useState<any | null>(null);
+  const [limitInfo, setLimitInfo] = useState<{ current: number; max: number | null } | null>(null);
   const { data: patients = [], isLoading } = usePatients();
   const { profile } = useAuth();
   const createPatient = useCreatePatient();
+  const { checkLimit } = usePlanFeatures();
+
+  // Verificar limite ao abrir dialog
+  useEffect(() => {
+    if (isDialogOpen) {
+      checkLimit('max_pacientes').then(result => {
+        setLimitInfo({ current: result.current, max: result.max });
+      });
+    }
+  }, [isDialogOpen, checkLimit]);
 
   const {
     register,
@@ -81,6 +94,13 @@ export default function CRM() {
   const onSubmit = async (data: PatientFormData) => {
     if (!profile?.organization_id) {
       toast.error('Erro: organização não identificada');
+      return;
+    }
+
+    // Verificar limite antes de criar
+    const limitCheck = await checkLimit('max_pacientes');
+    if (!limitCheck.allowed) {
+      toast.error(`Limite de ${limitCheck.max} pacientes atingido! Faça upgrade do seu plano.`);
       return;
     }
 
@@ -155,6 +175,17 @@ export default function CRM() {
                 Adicione um novo paciente ao seu sistema de gestão.
               </DialogDescription>
             </DialogHeader>
+            {limitInfo && limitInfo.max && (
+              <LimitAlert
+                current={limitInfo.current}
+                max={limitInfo.max}
+                limitName="pacientes"
+                onUpgrade={() => {
+                  setIsDialogOpen(false);
+                  window.dispatchEvent(new CustomEvent('open-plan-modal'));
+                }}
+              />
+            )}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome Completo</Label>

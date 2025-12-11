@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bot, Sparkles, Save, Loader2, Edit, X, Clock, MessageSquare, Smile, Plus, Trash2, Bell, FileQuestion, Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { PlanGuard } from "@/components/PlanGuard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -333,7 +334,8 @@ export default function AgentIA() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8">
+    <PlanGuard feature="atendimento_inteligente">
+      <div className="space-y-6 p-4 md:p-6 lg:p-8">
       {/* Header */}
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-2">
@@ -1000,5 +1002,6 @@ export default function AgentIA() {
         </div>
       </div>
     </div>
+    </PlanGuard>
   );
 }

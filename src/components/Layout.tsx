@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -64,6 +64,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [selectedPlanForRequest, setSelectedPlanForRequest] = useState<string | null>(null);
+
+  // Listener para abrir modal de planos via evento customizado
+  useEffect(() => {
+    const handleOpenPlanModal = () => setIsPlanModalOpen(true);
+    window.addEventListener('open-plan-modal', handleOpenPlanModal);
+    return () => window.removeEventListener('open-plan-modal', handleOpenPlanModal);
+  }, []);
 
   // Carregar planos disponíveis
   const { data: plans = [] } = useQuery({
