@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
@@ -26,6 +26,15 @@
   </head>
 
   <body>
+    <script>
+      // Aplicar tema escuro imediatamente para evitar flash
+      const storedTheme = localStorage.getItem('theme');
+      const theme = storedTheme || 'dark';
+      document.documentElement.classList.add(theme);
+      if (storedTheme === null) {
+        localStorage.setItem('theme', 'dark');
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
