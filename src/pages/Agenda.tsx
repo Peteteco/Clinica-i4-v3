@@ -72,6 +72,7 @@ export default function Agenda() {
   const [isWorkScheduleModalOpen, setIsWorkScheduleModalOpen] = useState(false);
   const [workSchedule, setWorkSchedule] = useState<WorkSchedule | null>(null);
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
+  const [consultationDuration, setConsultationDuration] = useState<number>(30);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -128,6 +129,12 @@ export default function Agenda() {
 
       if (data) {
         // ✅ TEM DADOS NO BANCO: Converter estrutura do banco para UI
+        
+        // Carregar duração da consulta
+        if (data.consultation_duration) {
+          setConsultationDuration(data.consultation_duration);
+        }
+        
         const schedule: WorkSchedule = {
           id: data.id,
           domingo: {
@@ -272,6 +279,8 @@ export default function Agenda() {
         sabado_fim_trabalho: workSchedule.sabado.is_active ? workSchedule.sabado.fim_trabalho : null,
         sabado_inicio_almoco: workSchedule.sabado.is_active ? workSchedule.sabado.inicio_almoco : null,
         sabado_fim_almoco: workSchedule.sabado.is_active ? workSchedule.sabado.fim_almoco : null,
+        // Incluir duração da consulta
+        consultation_duration: consultationDuration,
       };
 
       console.log('💾 Salvando no banco:', dataToSave);
@@ -448,6 +457,7 @@ export default function Agenda() {
     // Usar start_datetime se disponível, senão usar date+time (compatibilidade)
     let date: Date;
     let time: string;
+    let endTime: string | null = null;
     
     if (apt.start_datetime) {
       // Extrair data/hora LITERAL do banco, sem conversão de timezone
@@ -471,10 +481,25 @@ export default function Agenda() {
       time = apt.time;
     }
     
+    // Extrair hora de fim se disponível
+    if (apt.end_datetime) {
+      const endMatch = apt.end_datetime.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+      if (endMatch) {
+        const [, , , , hours, minutes] = endMatch;  // year, month, day, hours, minutes
+        endTime = `${hours}:${minutes}`;
+      } else {
+        const endDate = new Date(apt.end_datetime);
+        const hours = String(endDate.getHours()).padStart(2, '0');
+        const minutes = String(endDate.getMinutes()).padStart(2, '0');
+        endTime = `${hours}:${minutes}`;
+      }
+    }
+    
     return {
       id: apt.id,
       date: date,
       time: time,
+      endTime: endTime,
       patient: apt.patient_name,
       type: apt.type,
       status: apt.status as "confirmed" | "pending" | "completed"
@@ -1030,7 +1055,7 @@ export default function Agenda() {
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-accent" />
                       <span className="text-sm font-semibold text-foreground">
-                        {appointment.time}
+                        {appointment.endTime ? `${appointment.time} - ${appointment.endTime}` : appointment.time}
                       </span>
                       <div
                         className={cn(
@@ -1072,6 +1097,13 @@ export default function Agenda() {
             <DialogTitle className="font-display text-lg md:text-xl">
               Novo Compromisso
             </DialogTitle>
+            <DialogDescription>
+              {consultationDuration && (
+                <span className="text-accent">
+                  ⏱️ Duração padrão: {consultationDuration} minutos
+                </span>
+              )}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -1097,7 +1129,26 @@ export default function Agenda() {
                   id="start_time"
                   type="time"
                   value={formData.start_time}
-                  onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
+                  onChange={(e) => {
+                    const newStartTime = e.target.value;
+                    setFormData(prev => {
+                      // Calcular automaticamente o horário de fim baseado na duração da consulta
+                      let newEndTime = prev.end_time;
+                      if (newStartTime && consultationDuration) {
+                        const [hours, minutes] = newStartTime.split(':').map(Number);
+                        const startDate = new Date();
+                        startDate.setHours(hours, minutes, 0);
+                        startDate.setMinutes(startDate.getMinutes() + consultationDuration);
+                        newEndTime = startDate.toTimeString().slice(0, 5);
+                      }
+                      return { 
+                        ...prev, 
+                        start_time: newStartTime,
+                        end_time: newEndTime,
+                        end_date: prev.start_date // Manter mesma data
+                      };
+                    });
+                  }}
                   className="w-full"
                 />
               </div>
@@ -1225,7 +1276,42 @@ export default function Agenda() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
               </div>
             ) : workSchedule ? (
-              diasDaSemana.map((dia) => {
+              <>
+                {/* Configuração de Duração da Consulta */}
+                <div className="card-luxury p-4 space-y-3 bg-accent/5 border-accent/20">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-accent" />
+                    <h3 className="font-semibold text-base">Tempo de Consulta</h3>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="consultation-duration" className="text-sm">
+                      Duração padrão de cada consulta (minutos)
+                    </Label>
+                    <Select
+                      value={consultationDuration.toString()}
+                      onValueChange={(value) => setConsultationDuration(Number(value))}
+                    >
+                      <SelectTrigger id="consultation-duration">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="15">15 minutos</SelectItem>
+                        <SelectItem value="20">20 minutos</SelectItem>
+                        <SelectItem value="30">30 minutos</SelectItem>
+                        <SelectItem value="45">45 minutos</SelectItem>
+                        <SelectItem value="60">1 hora</SelectItem>
+                        <SelectItem value="90">1 hora e 30 minutos</SelectItem>
+                        <SelectItem value="120">2 horas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Este tempo será usado como padrão ao criar novos agendamentos
+                    </p>
+                  </div>
+                </div>
+
+                {/* Lista de Dias da Semana */}
+                {diasDaSemana.map((dia) => {
                 const daySchedule = workSchedule[dia.key];
 
                 return (
@@ -1317,7 +1403,8 @@ export default function Agenda() {
                     )}
                   </div>
                 );
-              })
+              })}
+              </>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 Erro ao carregar horários

@@ -22,3 +22,4 @@ ADD CONSTRAINT patients_kanban_status_check CHECK (
 -- Atualiza o comentário
 COMMENT ON COLUMN public.patients.kanban_status IS 'Status do lead no funil de vendas do Kanban - Inclui: novo_contato, qualificado, em_atendimento, agendado, aguardando_confirmacao, concluido, consulta_cancelado';
 
+

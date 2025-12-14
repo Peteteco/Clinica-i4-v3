@@ -366,6 +366,7 @@ export interface Database {
           sabado_fim_trabalho: string | null
           sabado_inicio_almoco: string | null
           sabado_fim_almoco: string | null
+          consultation_duration: number
           created_at: string
           updated_at: string
         }
@@ -415,6 +416,7 @@ export interface Database {
           sabado_fim_trabalho?: string | null
           sabado_inicio_almoco?: string | null
           sabado_fim_almoco?: string | null
+          consultation_duration?: number
           created_at?: string
           updated_at?: string
         }
@@ -464,6 +466,7 @@ export interface Database {
           sabado_fim_trabalho?: string | null
           sabado_inicio_almoco?: string | null
           sabado_fim_almoco?: string | null
+          consultation_duration?: number
           created_at?: string
           updated_at?: string
         }
