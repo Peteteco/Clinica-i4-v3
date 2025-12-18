@@ -171,7 +171,7 @@ export default function OrganizationForm() {
 
       console.log("Configurando webhook, payload:", payload);
 
-      const response = await fetch("https://webhook.n8nlabz.com.br/webhook/configurar-webhook", {
+      const response = await fetch("https://webhook.u4digital.com.br/webhook/configurar-webhook", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -291,7 +291,7 @@ export default function OrganizationForm() {
       console.log("Enviando dados para criação de workflow:", payload);
 
       // Chamar webhook
-      const response = await fetch("https://webhook.n8nlabz.com.br/webhook/criacao-fluxo", {
+      const response = await fetch("https://webhook.u4digital.com.br/webhook/criacao-fluxo", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

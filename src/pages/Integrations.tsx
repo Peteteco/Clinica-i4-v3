@@ -112,7 +112,7 @@ export default function Integrations() {
           organizationName: organization?.name,
         };
 
-        const response = await fetch("https://webhook.n8nlabz.com.br/webhook/verificar-conexao", {
+        const response = await fetch("https://webhook.u4digital.com.br/webhook/verificar-conexao", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -299,7 +299,7 @@ export default function Integrations() {
     try {
       setIsConnecting(true);
 
-      const response = await fetch("https://webhook.n8nlabz.com.br/webhook/criar-instancia-cliente", {
+      const response = await fetch("https://webhook.u4digital.com.br/webhook/criar-instancia-cliente", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -381,7 +381,7 @@ export default function Integrations() {
       
       console.log("Apagando instância, payload:", payload);
       
-      const response = await fetch("https://webhook.n8nlabz.com.br/webhook/apagar-instancia", {
+      const response = await fetch("https://webhook.u4digital.com.br/webhook/apagar-instancia", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -447,7 +447,7 @@ export default function Integrations() {
       
       console.log("Listando instância, payload:", payload);
       
-      const response = await fetch("https://webhook.n8nlabz.com.br/webhook/listar-instancia", {
+      const response = await fetch("https://webhook.u4digital.com.br/webhook/listar-instancia", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -507,7 +507,7 @@ export default function Integrations() {
       
       console.log("Payload enviado:", payload);
       
-      const response = await fetch("https://webhook.n8nlabz.com.br/webhook/gerar-qrcode", {
+      const response = await fetch("https://webhook.u4digital.com.br/webhook/gerar-qrcode", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
