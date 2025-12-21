@@ -2,7 +2,7 @@
 
 ## 📍 Endpoint
 ```
-POST https://webhook.n8nlabz.com.br/webhook/labz-criar-agenda
+POST https://webhook.u4digital.com.br/webhook/labz-criar-agenda
 ```
 
 ## 🎯 Quando é Disparado
@@ -82,7 +82,7 @@ O webhook é acionado automaticamente quando um novo compromisso é criado na **
 
 ### 2. Via cURL (Teste Manual)
 ```bash
-curl -X POST https://webhook.n8nlabz.com.br/webhook/labz-criar-agenda \
+curl -X POST https://webhook.u4digital.com.br/webhook/labz-criar-agenda \
   -H "Content-Type: application/json" \
   -d '{
     "id": "test-123",
@@ -100,7 +100,7 @@ curl -X POST https://webhook.n8nlabz.com.br/webhook/labz-criar-agenda \
 
 ### 3. Via JavaScript (Console do Browser)
 ```javascript
-fetch('https://webhook.n8nlabz.com.br/webhook/labz-criar-agenda', {
+fetch('https://webhook.u4digital.com.br/webhook/labz-criar-agenda', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -172,13 +172,13 @@ const webhookData = {
 Criar variável de ambiente (`.env`):
 
 ```env
-VITE_WEBHOOK_URL=https://webhook.n8nlabz.com.br/webhook/labz-criar-agenda
+VITE_WEBHOOK_URL=https://webhook.u4digital.com.br/webhook/labz-criar-agenda
 ```
 
 E usar no código:
 
 ```typescript
-const webhookUrl = import.meta.env.VITE_WEBHOOK_URL || 'https://webhook.n8nlabz.com.br/webhook/labz-criar-agenda';
+const webhookUrl = import.meta.env.VITE_WEBHOOK_URL || 'https://webhook.u4digital.com.br/webhook/labz-criar-agenda';
 
 await fetch(webhookUrl, {
   method: 'POST',
@@ -189,7 +189,7 @@ await fetch(webhookUrl, {
 ### Adicionar Autenticação
 
 ```typescript
-await fetch('https://webhook.n8nlabz.com.br/webhook/labz-criar-agenda', {
+await fetch('https://webhook.u4digital.com.br/webhook/labz-criar-agenda', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

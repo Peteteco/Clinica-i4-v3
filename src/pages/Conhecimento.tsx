@@ -199,7 +199,7 @@ export default function Conhecimento() {
 
       console.log("Payload enviado:", payload);
 
-      const response = await fetch("https://webhook.n8nlabz.com.br/webhook/rag-deletar-unico", {
+      const response = await fetch("https://webhook.u4digital.com.br/webhook/rag-deletar-unico", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -252,7 +252,7 @@ export default function Conhecimento() {
 
       console.log("Payload enviado:", payload);
 
-      const response = await fetch("https://webhook.n8nlabz.com.br/webhook/rag-deletar-tudo", {
+      const response = await fetch("https://webhook.u4digital.com.br/webhook/rag-deletar-tudo", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -385,7 +385,7 @@ export default function Conhecimento() {
         organizationName: organization.name,
       });
 
-      const response = await fetch("https://webhook.n8nlabz.com.br/webhook/rag-cliente", {
+      const response = await fetch("https://webhook.u4digital.com.br/webhook/rag-cliente", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
