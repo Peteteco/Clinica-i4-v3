@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase, SUPABASE_URL } from "@/lib/supabase";
 import { ArrowLeft, Save, Upload, X, Workflow, Sparkles, Loader2, MessageSquare, Check, XCircle, Clock, Users, UserPlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -171,7 +171,7 @@ export default function OrganizationForm() {
 
       console.log("Configurando webhook, payload:", payload);
 
-      const response = await fetch("https://webhook.u4digital.com.br/webhook/configurar-webhook", {
+      const response = await fetch("https://n8n.main.iseed.cloud/webhook/configurar-webhook", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -291,7 +291,7 @@ export default function OrganizationForm() {
       console.log("Enviando dados para criação de workflow:", payload);
 
       // Chamar webhook
-      const response = await fetch("https://webhook.u4digital.com.br/webhook/criacao-fluxo", {
+      const response = await fetch("https://n8n.main.iseed.cloud/webhook/criacao-fluxo", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -444,8 +444,8 @@ export default function OrganizationForm() {
       } else {
         // Chamar Edge Function para criar
         console.log("📞 Chamando Edge Function create-organization...");
-        console.log("📞 URL:", `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-organization`);
-        console.log("📞 VITE_SUPABASE_URL:", import.meta.env.VITE_SUPABASE_URL);
+        console.log("📞 URL:", `${SUPABASE_URL}/functions/v1/create-organization`);
+        console.log("📞 SUPABASE_URL:", SUPABASE_URL);
         console.log("📞 Authorization Header:", `Bearer ${session.access_token.substring(0, 50)}...`);
         console.log("📞 Payload:", {
           organizationName: data.name,
@@ -456,7 +456,7 @@ export default function OrganizationForm() {
         });
         
         const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-organization`,
+          `${SUPABASE_URL}/functions/v1/create-organization`,
           {
             method: "POST",
             headers: {
@@ -527,7 +527,7 @@ export default function OrganizationForm() {
 
       // Chamar Edge Function
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-organization-users`,
+        `${SUPABASE_URL}/functions/v1/manage-organization-users`,
         {
           method: "POST",
           headers: {
@@ -582,7 +582,7 @@ export default function OrganizationForm() {
 
       // Chamar Edge Function
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-organization-users`,
+        `${SUPABASE_URL}/functions/v1/manage-organization-users`,
         {
           method: "POST",
           headers: {

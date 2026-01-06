@@ -6,7 +6,7 @@ Manter a agenda **100% conciliada** com o banco de dados, enviando todos os even
 
 ## 📡 Webhook de Conferência
 
-**Endpoint**: `https://webhook.u4digital.com.br/webhook/labz-conferir-agenda`
+**Endpoint**: `https://n8n.main.iseed.cloud/webhook/labz-conferir-agenda`
 
 **Método**: POST
 
@@ -158,7 +158,7 @@ const syncAgendaWithWebhook = async () => {
   });
 
   // 2. Enviar para webhook
-  const response = await fetch('https://webhook.u4digital.com.br/webhook/labz-conferir-agenda', {
+  const response = await fetch('https://n8n.main.iseed.cloud/webhook/labz-conferir-agenda', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

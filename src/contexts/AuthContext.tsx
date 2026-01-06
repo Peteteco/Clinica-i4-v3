@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase, SUPABASE_URL } from '@/lib/supabase';
 import { AuthContextType, Profile, Organization, SignUpData } from '@/types/auth';
 import { toast } from 'sonner';
 
@@ -73,16 +73,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Login
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('🔐 Tentando fazer login...', { email, url: SUPABASE_URL });
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro do Supabase:', error);
+        throw error;
+      }
+
+      console.log('✅ Login bem-sucedido:', data.user?.id);
       toast.success('Login realizado com sucesso!');
     } catch (error: any) {
-      console.error('Erro no login:', error);
-      toast.error(error.message || 'Erro ao fazer login');
+      console.error('❌ Erro no login:', error);
+      
+      // Tratar diferentes tipos de erro
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+        console.error('🌐 Erro de rede - Verifique:');
+        console.error('  1. URL do Supabase:', SUPABASE_URL);
+        console.error('  2. Chave configurada:', import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ? 'Sim' : 'Não (usando fallback)');
+        console.error('  3. Conexão com internet');
+        toast.error('Erro de conexão. Verifique sua internet e as configurações do Supabase.');
+      } else {
+        toast.error(error.message || 'Erro ao fazer login');
+      }
+      
       throw error;
     }
   };

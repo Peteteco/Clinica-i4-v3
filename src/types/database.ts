@@ -108,7 +108,7 @@ export interface Database {
           created_at: string
           organization_id: string
           name: string
-          email: string
+          email: string | null
           phone: string
           status: 'active' | 'inactive'
           last_visit: string | null
@@ -116,13 +116,14 @@ export interface Database {
           kanban_status: 'novo_contato' | 'qualificado' | 'em_atendimento' | 'agendado' | 'aguardando_confirmacao' | 'concluido'
           observations: string | null
           resumo: string | null
+          session_id: string | null
         }
         Insert: {
           id?: string
           created_at?: string
           organization_id: string
           name: string
-          email: string
+          email?: string | null
           phone: string
           status?: 'active' | 'inactive'
           last_visit?: string | null
@@ -130,13 +131,14 @@ export interface Database {
           kanban_status?: 'novo_contato' | 'qualificado' | 'em_atendimento' | 'agendado' | 'aguardando_confirmacao' | 'concluido'
           observations?: string | null
           resumo?: string | null
+          session_id?: string | null
         }
         Update: {
           id?: string
           created_at?: string
           organization_id?: string
           name?: string
-          email?: string
+          email?: string | null
           phone?: string
           status?: 'active' | 'inactive'
           last_visit?: string | null
@@ -144,6 +146,7 @@ export interface Database {
           kanban_status?: 'novo_contato' | 'qualificado' | 'em_atendimento' | 'agendado' | 'aguardando_confirmacao' | 'concluido'
           observations?: string | null
           resumo?: string | null
+          session_id?: string | null
         }
       }
       appointments: {

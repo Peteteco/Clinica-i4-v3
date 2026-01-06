@@ -345,7 +345,7 @@ export default function Agenda() {
       console.log(`📤 Enviando ${eventsToSync.length} eventos para conferência...`);
 
       // Enviar para webhook de conferência
-      const response = await fetch('https://webhook.u4digital.com.br/webhook/labz-conferir-agenda', {
+      const response = await fetch('https://n8n.main.iseed.cloud/webhook/labz-conferir-agenda', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -678,7 +678,7 @@ export default function Agenda() {
           created_at: new Date().toISOString()
         };
 
-        await fetch('https://webhook.u4digital.com.br/webhook/labz-criar-agenda', {
+        await fetch('https://n8n.main.iseed.cloud/webhook/labz-criar-agenda', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

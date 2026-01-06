@@ -169,7 +169,7 @@ Deve mostrar:
 3. Teste o webhook manualmente:
 
 ```bash
-curl -X POST https://webhook.u4digital.com.br/webhook/labz-criar-agenda \
+curl -X POST https://n8n.main.iseed.cloud/webhook/labz-criar-agenda \
   -H "Content-Type: application/json" \
   -d '{
     "start_datetime": "2024-11-25T14:30:00-03:00",
